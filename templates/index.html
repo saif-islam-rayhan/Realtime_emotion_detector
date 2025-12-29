@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--dark);
+            font-weight: 500;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 5px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .result-card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .emotion-badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .webcam-video {
+            width: 100%;
+            height: auto;
+            background: #000;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .emotion-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .file-upload {
+            border: 2px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .progress-container {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+        
+        .history-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="glass-card p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-1"><i class="fas fa-brain me-2"></i>Emotion Detection AI</h1>
+                            <p class="text-muted mb-0">Real-time emotion recognition using Deep Learning</p>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user me-2"></i>User Profile
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle me-2"></i>My Account</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>History</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>New Detection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="glass-card p-4 mb-4">
+                    <h5 class="mb-3"><i class="fas fa-sliders-h me-2"></i>Settings</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Confidence Threshold</label>
+                        <input type="range" class="form-range" id="confidenceRange" min="50" max="100" value="80">
+                        <div class="text-end">
+                            <span id="confidenceValue" class="badge bg-primary">80%</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Detection Speed</label>
+                        <select class="form-select">
+                            <option>Fast (Lower Accuracy)</option>
+                            <option selected>Balanced</option>
+                            <option>Accurate (Slower)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-primary w-100">
+                        <i class="fas fa-cog me-2"></i>Advanced Settings
+                    </button>
+                </div>
+
+                <div class="glass-card p-4">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Statistics</h5>
+                    <div class="stats-card mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Total Detections</span>
+                            <span class="fw-bold">1,247</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between">
+                            <span>Accuracy Rate</span>
+                            <span class="fw-bold">94.5%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 94.5%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Area -->
+            <div class="col-lg-9">
+                <!-- Tabs Navigation -->
+                <div class="glass-card p-3 mb-4">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image">
+                                <i class="fas fa-image me-2"></i>Image Analysis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video">
+                                <i class="fas fa-video me-2"></i>Video Analysis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="webcam-tab" data-bs-toggle="tab" data-bs-target="#webcam">
+                                <i class="fas fa-camera me-2"></i>Live Webcam
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history">
+                                <i class="fas fa-history me-2"></i>History
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Image Tab -->
+                    <div class="tab-pane fade show active" id="image" role="tabpanel">
+                        <div class="glass-card p-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="file-upload" id="imageDropzone" onclick="document.getElementById('imageInput').click()">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
+                                        <h5>Upload Image</h5>
+                                        <p class="text-muted">Drag & drop or click to upload</p>
+                                        <p class="text-muted small">Supports JPG, PNG, WEBP (Max 10MB)</p>
+                                        <input type="file" id="imageInput" accept="image/*" class="d-none">
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary w-100" onclick="uploadImage()">
+                                            <i class="fas fa-play me-2"></i>Start Analysis
+                                        </button>
+                                    </div>
+                                    <div class="mt-4">
+                                        <h6>Quick Actions</h6>
+                                        <div class="d-flex gap-2 mt-2">
+                                            <button class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-camera"></i> Take Photo
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm">
+                                                <i class="fab fa-google-drive"></i> Google Drive
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-history"></i> Recent
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div id="imagePreview" class="text-center">
+                                        <img id="previewImage" class="img-fluid rounded" style="max-height: 300px; display: none;">
+                                        <div id="noImage" class="py-5">
+                                            <i class="fas fa-image fa-4x text-muted mb-3"></i>
+                                            <p class="text-muted">No image selected</p>
+                                        </div>
+                                    </div>
+                                    <div id="imageResults" class="mt-3" style="display: none;">
+                                        <h6>Analysis Results</h6>
+                                        <div id="resultsContainer"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Tab -->
+                    <div class="tab-pane fade" id="video" role="tabpanel">
+                        <div class="glass-card p-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="file-upload" id="videoDropzone" onclick="document.getElementById('videoInput').click()">
+                                        <i class="fas fa-video fa-3x mb-3 text-primary"></i>
+                                        <h5>Upload Video</h5>
+                                        <p class="text-muted">Drag & drop or click to upload</p>
+                                        <p class="text-muted small">Supports MP4, AVI, MOV (Max 100MB)</p>
+                                        <input type="file" id="videoInput" accept="video/*" class="d-none">
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary w-100" onclick="uploadVideo()">
+                                            <i class="fas fa-play me-2"></i>Process Video
+                                        </button>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="progress-container">
+                                            <div class="progress-bar" id="videoProgress" style="width: 0%"></div>
+                                        </div>
+                                        <div class="text-center small" id="progressText">Ready to process</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div id="videoPreview">
+                                        <video id="previewVideo" class="img-fluid rounded" controls style="display: none;"></video>
+                                        <div id="noVideo" class="py-5 text-center">
+                                            <i class="fas fa-video-slash fa-4x text-muted mb-3"></i>
+                                            <p class="text-muted">No video selected</p>
+                                        </div>
+                                    </div>
+                                    <div id="videoResults" class="mt-3" style="display: none;">
+                                        <h6>Video Analysis Results</h6>
+                                        <div id="videoStats"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Webcam Tab -->
+                    <div class="tab-pane fade" id="webcam" role="tabpanel">
+                        <div class="glass-card p-4">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="video-container">
+                                        <img id="webcamFeed" class="webcam-video" alt="Webcam Feed">
+                                        <div class="controls">
+                                            <button class="btn btn-success" id="startWebcam">
+                                                <i class="fas fa-play me-2"></i>Start
+                                            </button>
+                                            <button class="btn btn-danger" id="stopWebcam" disabled>
+                                                <i class="fas fa-stop me-2"></i>Stop
+                                            </button>
+                                            <button class="btn btn-warning" id="captureImage">
+                                                <i class="fas fa-camera me-2"></i>Capture
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mt-4 mt-md-0">
+                                        <h5>Real-time Analysis</h5>
+                                        <div class="stats-card mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Faces Detected</span>
+                                                <span id="faceCount" class="fw-bold">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="stats-card mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Dominant Emotion</span>
+                                                <span id="dominantEmotion" class="fw-bold">-</span>
+                                            </div>
+                                        </div>
+                                        <div class="stats-card">
+                                            <h6>Emotion Distribution</h6>
+                                            <div id="emotionChart"></div>
+                                        </div>
+                                        <div class="emotion-legend mt-3">
+                                            <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Angry</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #008000"></div><span>Disgust</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #ff00ff"></div><span>Fear</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #00ffff"></div><span>Happy</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #0000ff"></div><span>Sad</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #ffa500"></div><span>Surprise</span></div>
+                                            <div class="legend-item"><div class="legend-color" style="background: #ffffff; border: 1px solid #ccc;"></div><span>Neutral</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Tab -->
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <div class="glass-card p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0">Detection History</h5>
+                                <div class="d-flex gap-2">
+                                    <input type="date" class="form-control" style="width: auto;">
+                                    <select class="form-select" style="width: auto;">
+                                        <option>All Types</option>
+                                        <option>Images</option>
+                                        <option>Videos</option>
+                                        <option>Webcam</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="historyList">
+                                <!-- History items will be loaded here -->
+                                <div class="history-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>Group Photo Analysis</h6>
+                                            <p class="text-muted small mb-2">5 faces detected • 94% accuracy</p>
+                                            <div class="d-flex gap-2">
+                                                <span class="badge bg-primary">Happy</span>
+                                                <span class="badge bg-secondary">Neutral</span>
+                                                <span class="badge bg-success">Surprise</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <p class="small text-muted mb-1">2 hours ago</p>
+                                            <button class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-redo"></i> Re-analyze
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="glass-card p-3 text-center">
+                    <p class="mb-0">
+                        <i class="fas fa-code me-2"></i>Emotion Detection AI • Powered by TensorFlow & OpenCV • 
+                        <span class="text-success"><i class="fas fa-circle me-1"></i>System Active</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Image Processing
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('previewImage');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('noImage').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) {
+                alert('Please select an image first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/predict-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // Update preview with processed image
+                document.getElementById('previewImage').src = data.image_base64;
+                
+                // Show results
+                document.getElementById('imageResults').style.display = 'block';
+                const resultsContainer = document.getElementById('resultsContainer');
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${data.faces_detected} face${data.faces_detected !== 1 ? 's' : ''} detected
+                    </div>
+                    ${data.predictions.map(pred => `
+                        <div class="result-card p-3 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${pred.emotion}</h6>
+                                    <div class="progress-container">
+                                        <div class="progress-bar" style="width: ${pred.confidence}%"></div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-primary">${pred.confidence}%</span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Position: (${pred.box.x}, ${pred.box.y}) • Size: ${pred.box.w}x${pred.box.h}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+
+            } catch (error) {
+                alert('Error processing image: ' + error.message);
+            }
+        }
+
+        // Video Processing
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const video = document.getElementById('previewVideo');
+                video.src = URL.createObjectURL(file);
+                video.style.display = 'block';
+                document.getElementById('noVideo').style.display = 'none';
+            }
+        });
+
+        async function uploadVideo() {
+            const fileInput = document.getElementById('videoInput');
+            if (!fileInput.files[0]) {
+                alert('Please select a video first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // Show progress
+            const progressBar = document.getElementById('videoProgress');
+            const progressText = document.getElementById('progressText');
+            
+            progressBar.style.width = '10%';
+            progressText.textContent = 'Uploading video...';
+
+            try {
+                const response = await fetch('/predict-video', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressBar.style.width = '50%';
+                progressText.textContent = 'Processing video...';
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Processing complete!';
+
+                // Show results
+                document.getElementById('videoResults').style.display = 'block';
+                document.getElementById('videoStats').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Video processed successfully
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h6><i class="fas fa-film me-2"></i>Video Info</h6>
+                                <p class="mb-1">Total Frames: ${data.total_frames}</p>
+                                <p class="mb-1">Avg. Faces/Frame: ${data.average_faces.toFixed(2)}</p>
+                                <a href="${data.output_video}" class="btn btn-sm btn-primary mt-2" target="_blank">
+                                    <i class="fas fa-download me-2"></i>Download Processed Video
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h6><i class="fas fa-image me-2"></i>Preview</h6>
+                                <img src="${data.thumbnail}" class="img-fluid rounded" alt="Video thumbnail">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                alert('Error processing video: ' + error.message);
+            }
+        }
+
+        // Webcam Processing
+        let webcamInterval;
+        const webcamFeed = document.getElementById('webcamFeed');
+        const startBtn = document.getElementById('startWebcam');
+        const stopBtn = document.getElementById('stopWebcam');
+        const captureBtn = document.getElementById('captureImage');
+        const faceCount = document.getElementById('faceCount');
+        const dominantEmotion = document.getElementById('dominantEmotion');
+
+        startBtn.addEventListener('click', async function() {
+            try {
+                // For demo purposes, we'll use a simulated webcam feed
+                // In production, you would connect to the actual webcam endpoint
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                // Start updating the webcam feed from the server
+                webcamFeed.src = '/video-feed';
+                
+                // Start updating stats
+                webcamInterval = setInterval(updateWebcamStats, 2000);
+                
+            } catch (error) {
+                alert('Error accessing webcam: ' + error.message);
+            }
+        });
+
+        stopBtn.addEventListener('click', function() {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            webcamFeed.src = '';
+            clearInterval(webcamInterval);
+        });
+
+        captureBtn.addEventListener('click', function() {
+            // Create a canvas element to capture the image
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = webcamFeed.videoWidth || 640;
+            canvas.height = webcamFeed.videoHeight || 480;
+            
+            context.drawImage(webcamFeed, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to data URL and trigger download
+            const link = document.createElement('a');
+            link.download = `emotion-capture-${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg');
+            link.click();
+            
+            alert('Image captured successfully!');
+        });
+
+        function updateWebcamStats() {
+            // Simulate updating stats (in real app, this would come from server)
+            const faces = Math.floor(Math.random() * 5);
+            faceCount.textContent = faces;
+            
+            const emotions = ['Happy', 'Neutral', 'Surprise', 'Sad', 'Angry'];
+            const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+            dominantEmotion.textContent = randomEmotion;
+        }
+
+        // Drag and drop functionality
+        ['imageDropzone', 'videoDropzone'].forEach(id => {
+            const dropzone = document.getElementById(id);
+            
+            dropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#6366f1';
+                this.style.background = 'rgba(99, 102, 241, 0.1)';
+            });
+            
+            dropzone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#cbd5e1';
+                this.style.background = '';
+            });
+            
+            dropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#cbd5e1';
+                this.style.background = '';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    if (id === 'imageDropzone') {
+                        document.getElementById('imageInput').files = files;
+                        document.getElementById('imageInput').dispatchEvent(new Event('change'));
+                    } else {
+                        document.getElementById('videoInput').files = files;
+                        document.getElementById('videoInput').dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+        });
+
+        // Settings
+        const confidenceRange = document.getElementById('confidenceRange');
+        const confidenceValue = document.getElementById('confidenceValue');
+        
+        confidenceRange.addEventListener('input', function() {
+            confidenceValue.textContent = this.value + '%';
+        });
+    </script>
+</body>
+</html>
